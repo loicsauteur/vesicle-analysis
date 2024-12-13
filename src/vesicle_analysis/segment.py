@@ -87,8 +87,8 @@ def segment_vesicles(
     On median filtered (ball=3) image, uses either Otsu or Yen threshold
     (whichever is lower), if not specified.
     Then uses a seeded watershed.
-    Excludes objects smaller than 0.015µm^3.
-    In case of oversegmentation, i.e. total vesicle volume > 50% of nucleus,
+    Exclude objects smaller than 0.015µm^3.
+    In case of over-segmentation, i.e. total vesicle volume > 50% of nucleus,
     segmentation method will be swapped.
 
     Parameters
@@ -108,13 +108,14 @@ def segment_vesicles(
     Returns
     -------
     Tuple:
-    Label image: np.array or None (if no vesicles),
+    Label image: np.ndarray or None (if no vesicles),
         Number of objects: Integer
         Thresholding method: String
 
     IF troubleshoot = True, returns Tuple of:
-        ves_median (gray-scale np.array), maxima (label np.array),
-        binary (np.array), watershed (label np.array), thresholding method (String)
+        ves_median (gray-scale np.ndarray), maxima (label np.ndarray),
+        binary (np.ndarray), watershed (label np.ndarray),
+        thresholding method (String)
 
     """
     # Check the method if inputted

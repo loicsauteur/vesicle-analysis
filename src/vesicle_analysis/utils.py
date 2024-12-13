@@ -20,7 +20,7 @@ def get_nucleus_volume(img_nucleus: np.ndarray, cal: tuple):
     img_nucleus:
         label image of nucleus
     cal:
-        tuple of ZYX pixle size in µm
+        tuple of ZYX pixel size in µm
 
     Returns
     -------
@@ -55,7 +55,16 @@ def min_max_distance(img_label: np.ndarray, calibration: tuple):
         min/max distance per label
     """
     ves_ves_dist = {"label": [], "min_ves-ves-dist": [], "max_ves-ves-dist": []}
-    for cur_region in regionprops(img_label):
+    ves_props = regionprops(img_label)
+    if len(ves_props["label"]) == 0:
+        # Should not come to this
+        raise RuntimeError("Could not measure distances of <0> vesicles.")
+    if len(ves_props["label"]) == 1:
+        ves_ves_dist["label"].append(ves_props[0].label)
+        ves_ves_dist["min_ves-ves-dist"].append("n/a")
+        ves_ves_dist["max_ves-ves-dist"].append("n/a")
+        return ves_ves_dist
+    for cur_region in ves_props:
         # print(cur_region.label)
         cur_max_dist = 0
         cur_min_dist = 100000000000
@@ -199,7 +208,213 @@ def get_angle_and_distance(
     return res
 
 
-def do_measurements(
+def measure_nucleus(nucleus_mask: np.ndarray, nucleus_channel: np.ndarray, cal: tuple):
+    """
+    Measure nucleus properties.
+
+    Parameters
+    ----------
+    nucleus_mask:
+        label image
+    nucleus_channel:
+        original raw intensity image
+    cal:
+        ZYX pixel size in µm
+
+    Returns
+    -------
+    Fixme To Describe
+    """
+    if nucleus_mask is None:
+        raise RuntimeError(
+            "Nucleus mask is None. " "Cannot calculate nucleus properties."
+        )
+    voxel_size = cal[0] * cal[1] * cal[2]
+    # Properties to measure
+    props = (
+        "label",
+        "area",
+        "area_filled",
+        "area_convex",
+        "centroid",
+        "intensity_mean",
+        "intensity_max",
+        "intensity_min",
+        # 'axis_major_length', 'axis_minor_length',
+        # not for 3D: 'eccentricity', 'orientation',
+        # 'perimeter', 'perimeter_crofton'
+    )
+    calibration_dict = {
+        "label": 1,
+        "area": voxel_size,
+        "area_filled": voxel_size,
+        "area_convex": voxel_size,
+        "centroid-0": 1,
+        "centroid-1": 1,
+        "centroid-2": 1,
+        "intensity_mean": 1,
+        "intensity_max": 1,
+        "intensity_min": 1,
+        # 'axis_major_length':1, 'axis_minor_length':1,
+        # not for 3D: 'eccentricity':1, 'orientation':1,
+        # 'perimeter':1, 'perimeter_crofton':1
+    }
+    # Measure Nucleus props
+    nuc_table = regionprops_table(
+        nucleus_mask, intensity_image=nucleus_channel, properties=props
+    )
+    nuc_table = pd.DataFrame(nuc_table)
+    nuc_table = nuc_table.mul(calibration_dict)
+
+    # Calculate nucleus roundness in 2D (& ellipse axes)
+    nuc_2d_props = regionprops(np.max(nucleus_mask, axis=0))
+    nuc_circ_dict = {
+        "label": [],
+        "Total n vesicles": [],
+        "Image stack height": [],
+        "2D_circularity": [],
+        "2D_circularity_crofton": [],
+        "2D_ellipse_major": [],
+        "2D_ellipse_minor": [],
+        "ratio_2D_minor-major": [],
+        "2D area": [],
+    }
+    for p in nuc_2d_props:
+        # circularity if regular perimeter
+        circ = 4 * math.pi * p.area / (p.perimeter**2)
+        nuc_circ_dict["label"].append(p.label)
+        nuc_circ_dict["2D_circularity"].append(circ)
+        # circularity if crofton perimeter
+        circ = 4 * math.pi * p.area / (p.perimeter_crofton**2)
+        nuc_circ_dict["2D_circularity_crofton"].append(circ)
+        # 2D elipse axes & ratio
+        nuc_circ_dict["2D_ellipse_major"].append(p.axis_major_length * cal[1])
+        nuc_circ_dict["2D_ellipse_minor"].append(p.axis_minor_length * cal[1])
+        nuc_circ_dict["ratio_2D_minor-major"].append(
+            p.axis_minor_length / p.axis_major_length
+        )
+        # add also the projected object area
+        nuc_circ_dict["2D area"].append(p.area * cal[1] * cal[2])
+
+        # TODO return merged or individual tables??
+
+
+def measure_vesicles(ves_mask: np.ndarray, ves_channel: np.ndarray, cal: tuple):
+    """
+    Measure vesicle properties.
+
+    Parameters
+    ----------
+    ves_mask:
+        label image
+    ves_channel:
+        raw intensity image
+    cal:
+        ZYX pixel size
+
+    Returns
+    -------
+    vesicle table: pd.DataFrame
+        per label measurements of vesicles in 3D and 2D
+    """
+    if ves_mask is None:
+        raise RuntimeError(
+            "Vesicle mask is None. " "Cannot calculate vesicle properties."
+        )
+    voxel_size = cal[0] * cal[1] * cal[2]
+    # Properties to measure
+    props = (
+        "label",
+        "area",
+        "area_filled",
+        "area_convex",
+        "centroid",
+        "intensity_mean",
+        "intensity_max",
+        "intensity_min",
+        # 'axis_major_length', 'axis_minor_length',
+        # not for 3D: 'eccentricity', 'orientation',
+        # 'perimeter', 'perimeter_crofton'
+    )
+    calibration_dict = {
+        "label": 1,
+        "area": voxel_size,
+        "area_filled": voxel_size,
+        "area_convex": voxel_size,
+        "centroid-0": 1,
+        "centroid-1": 1,
+        "centroid-2": 1,
+        "intensity_mean": 1,
+        "intensity_max": 1,
+        "intensity_min": 1,
+        # 'axis_major_length':1, 'axis_minor_length':1,
+        # not for 3D: 'eccentricity':1, 'orientation':1,
+        # 'perimeter':1, 'perimeter_crofton':1
+    }
+    ves_table = regionprops_table(
+        ves_mask, intensity_image=ves_channel, properties=props
+    )
+    ves_table = pd.DataFrame(ves_table)
+    ves_table = ves_table.mul(calibration_dict)
+
+    # 2D vesicle area measurements
+    if len(ves_table["label"]) == 0:
+        print(">>>>WARNING: No vesicles identified.<<<<")
+    elif len(ves_table["label"]) > 100:
+        print(
+            ">>>>WARNING: More than 100 vesicles.",
+            "kipped 2D vesicle measurements.<<<<",
+        )
+    else:
+        ves_2D = {"label": [], "2D area": []}
+        # project vesicles one by one
+        for label in ves_table["label"]:
+            single_label = np.max(np.where(ves_mask == label, ves_mask, 0), axis=0)
+            single_props = regionprops(single_label)
+            ves_2D["label"].append(label)
+            ves_2D["2D area"].append(single_props[0].area * cal[1] * cal[2])
+        # merge the 2D area measurements with the ves_table
+        ves_table = pd.merge(ves_table, pd.DataFrame.from_dict(ves_2D), on="label")
+    return ves_table
+
+
+def measure_distances(nuc_mask: np.ndarray, ves_mask: np.ndarray, cal: tuple):
+    """
+    Measure distances and angles.
+
+    Nucleus - vesicle distances
+    Vesicle - vesicle distances
+    Nucleus - vesicle angles
+
+    Parameters
+    ----------
+    nuc_mask:
+        label image
+    ves_mask:
+        label image
+    cal:
+        ZYX pixel size
+
+    Returns
+    -------
+    FIXME to describe
+    """
+    if nuc_mask is None:
+        raise RuntimeError("Cannot measure distances as nucleus mask is None.")
+    if ves_mask is None:
+        raise RuntimeError("Cannot measure distances as vesicle mask is None.")
+    # Vesicle - Nucleus distance
+    distance = ndimage.distance_transform_edt(nuc_mask < 1)  # FIXME not used yet
+    dict_dist = {"label": [], "distance-NucSurface": []}  # FIXME not used yet
+
+    # calculate vesicle to vesicle distance
+    ves_ves_dist = min_max_distance(ves_mask, calibration=cal)
+
+    # FIXME below just temporary
+    return distance, dict_dist, ves_ves_dist
+
+
+def do_measurements_old(
     nucleus_mask, nucleus_ch, vesicle_mask, vesicle_ch, calibration: tuple
 ):
     """
