@@ -10,6 +10,12 @@ A custom package for vesicle analysis.
 
 # Installation
 
+Create an environment, e.g. with conda:
+
+`conda create -n vesicle-analysis python=3.9``
+
+`conda activate vesicle-analysis`
+
 Download the code
 
 cd to the downloaded code folder

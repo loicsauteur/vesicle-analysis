@@ -1,43 +1,57 @@
 import os
-from skimage.io import imsave
-from aicsimageio import AICSImage
 
 import numpy as np
+from aicsimageio import AICSImage
+from skimage.io import imsave
 
-import pandas as pd
 
-__version__ = '0.1.0'
+def get_pkg_version() -> str:
+    """
+    Get the vesicle-analysis package version.
+
+    Return
+    -------
+    version number (str)
+
+    """
+    import vesicle_analysis as vsas
+
+    return vsas.__version__
 
 
 def get_channel(img: np.ndarray, ch: int):
     """
-    Get individual channel from a mulitchannel image.
+    Get individual channel from a multichannel image.
 
-    Parameters:
+    Parameters
     ----------
-    img: multichannel numpy array
-    ch: integer channel of interest (0-based)
-    
-    Returns:
-    --------
-    Single channel numpy array as type '<u2'
-
-    """
-    return img[:,:,:,ch].astype('<u2')
-
-def read_image(path):
-    '''
-    open an tif or nd2
+    img: np.ndarray
+        multichannel numpy array
+    ch: integer
+        integer channel of interest (0-based)
 
     Returns
-    ------- 
-    np.array image with axes TZYXC
-    tuple with ZYX pixel size in um
-    '''
+    -------
+    np.ndarray
+        Single channel numpy array as type '<u2'
+    """
+    return img[:, :, :, ch].astype("<u2")
 
-    # only support nd2 and tif
-    if not path.split('.')[-1] in ['nd2', 'tif', 'tiff']:
-        raise NotImplementedError('.' + path.split('.')[-1] + ' images not supported.')
+
+def read_image(path: str):
+    """
+    Open and tif or ND2.
+
+    Returns
+    -------
+    np.array
+        image with axes TZYXC
+    tuple
+        with ZYX pixel size in um
+    """
+    # only support ND2 and tif
+    if path.split(".")[-1] not in ["nd2", "tif", "tiff"]:
+        raise NotImplementedError("." + path.split(".")[-1] + " images not supported.")
 
     # AICSImage.data is always TCZYX
     a = AICSImage(path)
@@ -51,28 +65,41 @@ def read_image(path):
     return img, zyx_resolution
 
 
-def save_data(path: str, tabel_to_save, nucleus_to_save, vesicle_to_save, more_info=''):
+def save_data(path: str, table_to_save, nucleus_to_save, vesicle_to_save, more_info=""):
     """
-    Custom save function
+    Custom save function.
 
     Parameters
+    ----------
+    path: string
+        path of input image
+    table_to_save: pd.Dataframe
+        table to be saved
+    nucleus_to_save: np.ndarray
+        label image to save
+    vesicle_to_save: np.nd.array
+        label image to save
+    more_info: string
+        for additional filename information
+
+    Returns
     -------
-    path: string of input image
-    tabel_to_save: pd.DataFrame
-    nucleus_to_save: label image
-    vesicle_to_save: label image
-    more_info: string for additional filename information
+    None
     """
     filename = os.path.basename(path)
     folder = os.path.dirname(path)
-    
-    assert len(filename.split('.')) == 2, "You should not have dots ('.') in your file name. That's bad practise!"
-    filename = filename.split('.')[0]
 
-    # create new save path 
+    assert len(filename.split(".")) == 2, """You should not have dots ('.') in your
+    file name. That's bad practise!"""
+    filename = filename.split(".")[0]
+
+    # create new save path
     new_path = os.path.join(folder, filename)
 
     # save and include script version in file name
-    tabel_to_save.to_csv(new_path + '_' + more_info + '_v' + __version__ + '.csv')
-    imsave(new_path + '_mask_nucleus_v' + __version__ + '.tif', nucleus_to_save)
-    imsave(new_path + '_mask_vesicle_' + more_info + '_v' + __version__ + '.tif', vesicle_to_save)
+    table_to_save.to_csv(new_path + "_" + more_info + "_v" + get_pkg_version() + ".csv")
+    imsave(new_path + "_mask_nucleus_v" + get_pkg_version() + ".tif", nucleus_to_save)
+    imsave(
+        new_path + "_mask_vesicle_" + more_info + "_v" + get_pkg_version() + ".tif",
+        vesicle_to_save,
+    )
