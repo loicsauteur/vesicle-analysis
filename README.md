@@ -30,7 +30,7 @@ Run the analysis with the [workflow notebook](src/vesicle_analysis/notebooks/wor
     `pip install -e .`
     
     2. b) Install directyl from Git
-    - with: `pip install pip@git+https://github.com/loicsauteur/vesicle-analysis`
+    - with: `pip install git+https://github.com/loicsauteur/vesicle-analysis`
 
 
 
