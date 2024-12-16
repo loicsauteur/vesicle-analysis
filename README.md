@@ -8,18 +8,33 @@
 
 A custom package for vesicle analysis.
 
+# Description
+
+Custom analysis on vesicles. Requires small images of individual cells, with nucleus and vesicle marker.
+
+Run the analysis with the [workflow notebook](src/vesicle_analysis/notebooks/workflow.ipynb).
+
 # Installation
 
-Create an environment, e.g. with conda:
+1. Create an environment (only python 3.9 and 3.10 supported), e.g. with conda:
 
-`conda create -n vesicle-analysis python=3.9``
+`conda create -n vesicle-analysis python=3.9`
 
 `conda activate vesicle-analysis`
 
-Download the code
+2. Install the package
+  
+    2. a) Download and install locally
+    - cd to the downloaded code folder
+    - Install the package with:
+    `pip install -e .`
+    
+    2. b) Install directyl from Git
+    - with: `pip install pip@git+https://github.com/loicsauteur/vesicle-analysis`
 
-cd to the downloaded code folder
 
-Install the package with:
 
-`pip install -e .`
+<!---
+Note
+**check possibility to directly install from github (via pip)**
+-->

@@ -27,7 +27,7 @@ def segment_nucleus(dapi_channel: np.ndarray, calibration: tuple):
     dapi_channel: np.ndarray
         of single channel (dapi)
     calibration: tuple
-        of ZYX pixle size in µm
+        of ZYX pixel size in µm
 
     Returns
     -------
@@ -165,9 +165,17 @@ def segment_vesicles(
         if method == "yen":
             method = "otsu"
             threshold = filters.threshold_otsu(ves_median)
+            print(
+                '*** Info: swapped threshold from "yen" to "otsu",',
+                "since yen yielded total vesicle volume > 0.5* nucleus volume. ***",
+            )
         else:
             method = "yen"
             threshold = filters.threshold_yen(ves_median)
+            print(
+                '*** Info: swapped threshold from "otsu" to "yen",',
+                "since yen yielded total vesicle volume > 0.5* nucleus volume. ***",
+            )
         # Redo watershed
         binary = ves_median >= threshold
         maxima = morphology.local_maxima(ves_median, allow_borders=False)
@@ -203,9 +211,9 @@ def segment_vesicles_old(
     Parameters
     ----------
     vesicle_channel:
-        single channel np.array
+        single channel np.ndarray
     calibration:
-        tuple of ZYX pixle size in µm
+        tuple of ZYX pixel size in µm
     method:
         String for thresholding method, default = 'yen'.
         Implemented only otsu and yen.
