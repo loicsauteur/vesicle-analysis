@@ -24,13 +24,19 @@ Run the analysis with the [workflow notebook](src/vesicle_analysis/notebooks/wor
 
 2. Install the package
   
-    2. a) Download and install locally
+    2. a) Install directly from Git
+    - with: `pip install git+https://github.com/loicsauteur/vesicle-analysis`
+    - upgrade to the latest version:
+    `pip install --upgrade git+https://github.com/loicsauteur/vesicle-analysis`
+   
+    2 b) Download and install locally
     - cd to the downloaded code folder
     - Install the package with:
     `pip install -e .`
     
-    2. b) Install directyl from Git
-    - with: `pip install git+https://github.com/loicsauteur/vesicle-analysis`
+    2 c) Install Dev/Test dependencies
+    - download the code and type:
+    `pip install -e ".[test,dev]"`
 
 
 

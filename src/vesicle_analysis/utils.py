@@ -134,7 +134,7 @@ def get_angle_and_distance(
     - distance between nucleus and vesicle centroids in 3D (in µm)
     - calculate the angle (2D, i.e. projection) between nucleus and vesicle centroid
     - normalise the angle using the mean angle or the middle angle
-      (middle between min and max anlges)
+      (middle between min and max angles)
     - and absolute normalised angles (changing negative angles to positive)
 
     Parameters
@@ -215,10 +215,10 @@ def get_angle_and_distance(
             norm2middle = norm2middle + 360
         if norm2middle > 180:
             norm2middle = norm2middle - 360
-        res["angleNorm2Mean"].append(cur_angle - avg_angle)
-        res["angleNorm2Middle"].append(cur_angle - middle_angle)
-        res["abs(angleNorm2Mean)"].append(abs(cur_angle - avg_angle))
-        res["abs(angleNorm2Middle)"].append(abs(cur_angle - middle_angle))
+        res["angleNorm2Mean"].append(norm2mean)
+        res["angleNorm2Middle"].append(norm2middle)
+        res["abs(angleNorm2Mean)"].append(abs(norm2mean))
+        res["abs(angleNorm2Middle)"].append(abs(norm2middle))
     return res
 
 
